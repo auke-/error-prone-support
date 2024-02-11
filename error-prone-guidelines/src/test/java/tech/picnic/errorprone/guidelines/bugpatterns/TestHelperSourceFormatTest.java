@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledForJreRange;
 import org.junit.jupiter.api.condition.JRE;
 
-final class ErrorProneTestHelperSourceFormatTest {
+final class TestHelperSourceFormatTest {
   // XXX: Add tests cases for `ErrorProneTestHelperSourceFormat:IgnoreMalformedCode`.
   // XXX: Consider reducing the `@DisabledForJreRange(max = JRE.JAVA_14)` test scope by moving the
   // text blocks to smaller test methods.
@@ -15,7 +15,7 @@ final class ErrorProneTestHelperSourceFormatTest {
   @DisabledForJreRange(max = JRE.JAVA_14)
   @Test
   void identification() {
-    CompilationTestHelper.newInstance(ErrorProneTestHelperSourceFormat.class, getClass())
+    CompilationTestHelper.newInstance(TestHelperSourceFormat.class, getClass())
         .addSourceLines(
             "A.java",
             "import com.google.errorprone.BugCheckerRefactoringTestHelper;",
@@ -76,7 +76,7 @@ final class ErrorProneTestHelperSourceFormatTest {
   @DisabledForJreRange(max = JRE.JAVA_14)
   @Test
   void identificationAvoidTextBlocks() {
-    CompilationTestHelper.newInstance(ErrorProneTestHelperSourceFormat.class, getClass())
+    CompilationTestHelper.newInstance(TestHelperSourceFormat.class, getClass())
         .setArgs("-XepOpt:ErrorProneTestHelperSourceFormat:AvoidTextBlocks=true")
         .addSourceLines(
             "A.java",
@@ -131,7 +131,7 @@ final class ErrorProneTestHelperSourceFormatTest {
      * imports are removed unless part of a `BugCheckerRefactoringTestHelper` expected output file.
      * Also verifies that text blocks are properly indented.
      */
-    BugCheckerRefactoringTestHelper.newInstance(ErrorProneTestHelperSourceFormat.class, getClass())
+    BugCheckerRefactoringTestHelper.newInstance(TestHelperSourceFormat.class, getClass())
         .addInputLines(
             "A.java",
             "import com.google.errorprone.BugCheckerRefactoringTestHelper;",
@@ -226,7 +226,7 @@ final class ErrorProneTestHelperSourceFormatTest {
      * Verifies that import sorting and code formatting is performed unconditionally, while unused
      * imports are removed unless part of a `BugCheckerRefactoringTestHelper` expected output file.
      */
-    BugCheckerRefactoringTestHelper.newInstance(ErrorProneTestHelperSourceFormat.class, getClass())
+    BugCheckerRefactoringTestHelper.newInstance(TestHelperSourceFormat.class, getClass())
         .setArgs("-XepOpt:ErrorProneTestHelperSourceFormat:AvoidTextBlocks=true")
         .addInputLines(
             "in/A.java",

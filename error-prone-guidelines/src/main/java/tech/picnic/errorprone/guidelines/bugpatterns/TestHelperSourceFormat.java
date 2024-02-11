@@ -69,13 +69,13 @@ import tech.picnic.errorprone.utils.SourceCode;
     summary =
         "Test code should follow the Google Java style (and when targeting JDK 15+ be "
             + "specified using a single text block)",
-    link = BUG_PATTERNS_BASE_URL + "ErrorProneTestHelperSourceFormat",
+    link = BUG_PATTERNS_BASE_URL + "TestHelperSourceFormat",
     linkType = CUSTOM,
     severity = SUGGESTION,
     tags = STYLE)
 // XXX: Drop suppression if/when the `avoidTextBlocks` field is dropped.
 @SuppressWarnings("java:S2160" /* Super class equality definition suffices. */)
-public final class ErrorProneTestHelperSourceFormat extends BugChecker
+public final class TestHelperSourceFormat extends BugChecker
     implements MethodInvocationTreeMatcher {
   private static final long serialVersionUID = 1L;
   private static final String FLAG_AVOID_TEXT_BLOCKS =
@@ -99,7 +99,7 @@ public final class ErrorProneTestHelperSourceFormat extends BugChecker
           .onDescendantOf("com.google.errorprone.BugCheckerRefactoringTestHelper.ExpectOutput")
           .named("addOutputLines");
   private static final Supplier<Boolean> IS_JABEL_ENABLED =
-      VisitorState.memoize(ErrorProneTestHelperSourceFormat::isJabelEnabled);
+      VisitorState.memoize(TestHelperSourceFormat::isJabelEnabled);
   // XXX: Proper name for this?
   // XXX: Something about tabs.
   private static final String TEXT_BLOCK_MARKER = "\"\"\"";
@@ -109,18 +109,18 @@ public final class ErrorProneTestHelperSourceFormat extends BugChecker
 
   private final boolean avoidTextBlocks;
 
-  /** Instantiates a default {@link ErrorProneTestHelperSourceFormat} instance. */
-  public ErrorProneTestHelperSourceFormat() {
+  /** Instantiates a default {@link TestHelperSourceFormat} instance. */
+  public TestHelperSourceFormat() {
     this(ErrorProneFlags.empty());
   }
 
   /**
-   * Instantiates a customized {@link ErrorProneTestHelperSourceFormat}.
+   * Instantiates a customized {@link TestHelperSourceFormat}.
    *
    * @param flags Any provided command line flags.
    */
   @Inject
-  ErrorProneTestHelperSourceFormat(ErrorProneFlags flags) {
+  TestHelperSourceFormat(ErrorProneFlags flags) {
     avoidTextBlocks = flags.getBoolean(FLAG_AVOID_TEXT_BLOCKS).orElse(Boolean.FALSE);
   }
 
