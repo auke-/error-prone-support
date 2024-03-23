@@ -77,6 +77,9 @@ public final class SourceCode {
    * Constructs a multi-line string by joining the given source code lines, if they all represent
    * compile-time constants.
    *
+   * @implNote Lines are always joined with {@value #TEXT_BLOCK_LINE_SEPARATOR}, independent of the
+   *     platform on which this method is executed. This ensures consistent line separation in case
+   *     some of the lines are multi-line text blocks.
    * @param sourceLines The source code lines of interest.
    * @return A non-empty optional iff all source code lines represent compile-time constants.
    */
@@ -89,8 +92,7 @@ public final class SourceCode {
 
     for (ExpressionTree sourceLine : sourceLines) {
       if (!source.isEmpty()) {
-        // XXX: Review whether we can/should use `System.lineSeparator()` here.
-        source.append('\n');
+        source.append(TEXT_BLOCK_LINE_SEPARATOR);
       }
 
       String value = ASTHelpers.constValue(sourceLine, String.class);
