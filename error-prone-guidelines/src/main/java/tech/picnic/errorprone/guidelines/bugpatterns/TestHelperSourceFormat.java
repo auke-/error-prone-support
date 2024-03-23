@@ -53,27 +53,20 @@ import tech.picnic.errorprone.utils.SourceCode;
  * are not able to) remove imports that become obsolete as a result of applying their suggested
  * fix(es).
  */
-// XXX: The check does not flag well-formatted text blocks with insufficient indentation. Cover this
-// using an generic check or wait for Google Java Format support (see
+// XXX: The check does not flag well-formatted text blocks with insufficient or excess indentation.
+// Cover this using an generic check or wait for Google Java Format support (see
 // https://github.com/google/google-java-format/issues/883#issuecomment-1404336418).
-// XXX: The check does not flag well-formatted text blocks with excess indentation.
-// XXX: ^ Validate this claim.
-// XXX: GJF guesses the line separator to be used by inspecting the source. When using text blocks
-// this may cause the current unconditional use of `\n` not to be sufficient when building on
-// Windows; TBD.
-// XXX: Forward compatibility: ignore "malformed" code in tests that, based on an
-// `@DisabledForJreRange` or `@EnableForJreRange` annotation, target a Java runtime greater than the
-// current runtime.
 @AutoService(BugChecker.class)
 @BugPattern(
     summary =
-        "Test code should follow the Google Java style (and when targeting JDK 15+ be "
-            + "specified using a single text block)",
+        """
+        Test code should follow the Google Java style (and when targeting JDK
+        15+ be specified using a single text block)""",
     link = BUG_PATTERNS_BASE_URL + "TestHelperSourceFormat",
     linkType = CUSTOM,
     severity = SUGGESTION,
     tags = STYLE)
-// XXX: Drop suppression if/when the `avoidTextBlocks` field is dropped.
+// XXX: Drop this suppression if/when the `avoidTextBlocks` field is dropped.
 @SuppressWarnings("java:S2160" /* Super class equality definition suffices. */)
 public final class TestHelperSourceFormat extends BugChecker
     implements MethodInvocationTreeMatcher {
@@ -91,6 +84,8 @@ public final class TestHelperSourceFormat extends BugChecker
               .named("addInputLines"),
           // XXX: Add tests for `Compilation.compileWithDocumentationGenerator`. Until done, make
           // sure to update this matcher if that method's class or name is changed/moved.
+          // XXX: Alternatively, match any invocation of a method whose last argument is annotated
+          // `@Language("JAVA")`.
           staticMethod()
               .onClass("tech.picnic.errorprone.documentation.Compilation")
               .named("compileWithDocumentationGenerator"));
@@ -100,10 +95,6 @@ public final class TestHelperSourceFormat extends BugChecker
           .named("addOutputLines");
   private static final Supplier<Boolean> IS_JABEL_ENABLED =
       VisitorState.memoize(TestHelperSourceFormat::isJabelEnabled);
-  // XXX: Proper name for this?
-  // XXX: Something about tabs.
-  private static final String TEXT_BLOCK_MARKER = "\"\"\"";
-  private static final String TEXT_BLOCK_LINE_SEPARATOR = "\n";
   private static final String DEFAULT_TEXT_BLOCK_INDENTATION = " ".repeat(12);
   private static final String METHOD_SELECT_ARGUMENT_RELATIVE_INDENTATION = " ".repeat(8);
 
@@ -139,7 +130,7 @@ public final class TestHelperSourceFormat extends BugChecker
     }
 
     /* Attempt to format the source code only if it fully consists of constant expressions. */
-    return getConstantSourceCode(sourceLines)
+    return SourceCode.joinConstantSourceCodeLines(sourceLines)
         .map(source -> flagFormattingIssues(sourceLines, source, isOutputSource, state))
         .orElse(Description.NO_MATCH);
   }
@@ -222,18 +213,18 @@ public final class TestHelperSourceFormat extends BugChecker
     String indentation = suggestTextBlockIndentation(tree, state);
 
     // XXX: Verify trailing """ on new line.
-    return TEXT_BLOCK_MARKER
+    return SourceCode.TEXT_BLOCK_DELIMITER
         + System.lineSeparator()
         + indentation
         + source
-            .replace(TEXT_BLOCK_LINE_SEPARATOR, System.lineSeparator() + indentation)
+            .replace(SourceCode.TEXT_BLOCK_LINE_SEPARATOR, System.lineSeparator() + indentation)
             .replace("\\", "\\\\")
-            .replace(TEXT_BLOCK_MARKER, "\"\"\\\"")
-        + TEXT_BLOCK_MARKER;
+            .replace(SourceCode.TEXT_BLOCK_DELIMITER, "\"\"\\\"")
+        + SourceCode.TEXT_BLOCK_DELIMITER;
   }
 
   private static String toLineEnumeration(String source, VisitorState state) {
-    return Splitter.on(TEXT_BLOCK_LINE_SEPARATOR)
+    return Splitter.on(SourceCode.TEXT_BLOCK_LINE_SEPARATOR)
         .splitToStream(source)
         .map(state::getConstantExpression)
         .collect(joining(", "));
@@ -268,7 +259,7 @@ public final class TestHelperSourceFormat extends BugChecker
       return Optional.empty();
     }
 
-    return Optional.of(source.substring(finalNewLine + 1, startPos))
+    return Optional.of(source.substring(finalNewLine + System.lineSeparator().length(), startPos))
         .filter(CharMatcher.whitespace()::matchesAllOf);
   }
 
@@ -280,27 +271,6 @@ public final class TestHelperSourceFormat extends BugChecker
             ? withReorderedImports
             : RemoveUnusedImports.removeUnusedImports(withReorderedImports);
     return FORMATTER.formatSource(withOptionallyRemovedImports);
-  }
-
-  // XXX: This logic is duplicated in `BugPatternTestExtractor`. Can we do better?
-  private static Optional<String> getConstantSourceCode(
-      List<? extends ExpressionTree> sourceLines) {
-    StringBuilder source = new StringBuilder();
-
-    for (ExpressionTree sourceLine : sourceLines) {
-      if (source.length() > 0) {
-        source.append(TEXT_BLOCK_LINE_SEPARATOR);
-      }
-
-      String value = ASTHelpers.constValue(sourceLine, String.class);
-      if (value == null) {
-        return Optional.empty();
-      }
-
-      source.append(value);
-    }
-
-    return Optional.of(source.toString());
   }
 
   /**

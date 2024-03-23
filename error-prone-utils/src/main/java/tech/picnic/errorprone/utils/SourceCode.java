@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.fixes.SuggestedFix;
+import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.ErrorProneToken;
 import com.google.errorprone.util.ErrorProneTokens;
 import com.sun.source.tree.ExpressionTree;
@@ -17,6 +18,7 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.Position;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,8 +29,14 @@ public final class SourceCode {
   /** The complement of {@link CharMatcher#whitespace()}. */
   private static final CharMatcher NON_WHITESPACE_MATCHER = CharMatcher.whitespace().negate();
 
-  // XXX: Proper name for this?
-  private static final String TEXT_BLOCK_MARKER = "\"\"\"";
+  /** The Java syntax that indicates the start and end of a text block. */
+  public static final String TEXT_BLOCK_DELIMITER = "\"\"\"";
+
+  /**
+   * The string separating lines in a Java text block, independently of the platform on which the
+   * code is compiled.
+   */
+  public static final String TEXT_BLOCK_LINE_SEPARATOR = "\n";
 
   private SourceCode() {}
 
@@ -48,7 +56,7 @@ public final class SourceCode {
 
     /* If the source code is unavailable then we assume that this literal is _not_ a text block. */
     String src = state.getSourceForNode(tree);
-    return src != null && src.startsWith(TEXT_BLOCK_MARKER);
+    return src != null && src.startsWith(TEXT_BLOCK_DELIMITER);
   }
 
   /**
@@ -63,6 +71,37 @@ public final class SourceCode {
   public static String treeToString(Tree tree, VisitorState state) {
     String src = state.getSourceForNode(tree);
     return src != null ? src : tree.toString();
+  }
+
+  /**
+   * Constructs a multi-line string by joining the given source code lines, if they all represent
+   * compile-time constants.
+   *
+   * @param sourceLines The source code lines of interest.
+   * @return A non-empty optional iff all source code lines represent compile-time constants.
+   */
+  // XXX: Test!
+  // XXX: This method doesn't add a trailing newline for the benefit of one caller, but that's
+  // perhaps a bit awkward.
+  public static Optional<String> joinConstantSourceCodeLines(
+      List<? extends ExpressionTree> sourceLines) {
+    StringBuilder source = new StringBuilder();
+
+    for (ExpressionTree sourceLine : sourceLines) {
+      if (!source.isEmpty()) {
+        // XXX: Review whether we can/should use `System.lineSeparator()` here.
+        source.append('\n');
+      }
+
+      String value = ASTHelpers.constValue(sourceLine, String.class);
+      if (value == null) {
+        return Optional.empty();
+      }
+
+      source.append(value);
+    }
+
+    return Optional.of(source.toString());
   }
 
   /**

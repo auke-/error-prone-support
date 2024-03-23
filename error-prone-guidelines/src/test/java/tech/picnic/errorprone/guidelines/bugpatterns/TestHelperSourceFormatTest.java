@@ -41,14 +41,14 @@ final class TestHelperSourceFormatTest {
                     .addSourceLines(
                         "F.java",
                         ""\"
-                           class F {}
-                           ""\")
+                        class F {}
+                        ""\")
                     // BUG: Diagnostic contains: Test code should follow the Google Java style (pay attention to
                     // trailing newlines)
                     .addSourceLines(
                         "G.java",
                         ""\"
-                           class G {}""\")
+                        class G {}""\")
                     .doTest();
 
                 BugCheckerRefactoringTestHelper.newInstance(RefasterAnyOfUsage.class, getClass())
