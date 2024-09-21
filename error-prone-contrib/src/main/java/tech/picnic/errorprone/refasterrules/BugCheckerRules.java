@@ -57,8 +57,9 @@ final class BugCheckerRules {
   }
 
   /**
-   * Prefer {@link SourceCode#toStringConstantExpression(CharSequence)} over alternatives that
-   * unnecessarily escape single quote characters.
+   * Prefer {@link SourceCode#toStringConstantExpression(Object,
+   * com.google.errorprone.VisitorState)} over alternatives that unnecessarily escape single quote
+   * characters.
    */
   static final class ConstantsFormat {
     @BeforeTemplate
@@ -73,7 +74,8 @@ final class BugCheckerRules {
 
     @AfterTemplate
     String after(CharSequence value) {
-      return SourceCode.toStringConstantExpression(value);
+      return SourceCode.toStringConstantExpression(
+          value, Refaster.emitCommentBefore("REPLACEME", null));
     }
   }
 }
